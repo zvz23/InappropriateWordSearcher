@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using InappropriateWordSearcher.Services;
 
 namespace InappropriateWordSearcher
 {
@@ -17,10 +18,11 @@ namespace InappropriateWordSearcher
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            if(!Directory.Exists(Path.Combine(Path.GetTempPath(), "WordSearcher")))
+            if (!Directory.Exists(AppConstants.ABS_TEMP_FOLDER))
             {
-                Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "WordSearcher"));
+                Directory.CreateDirectory(AppConstants.ABS_TEMP_FOLDER);
             }
+            TranscriptHistoryDbContext.Initialize_Database();
             Application.Run(new Form1());
         }
     }

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using System.Security.Cryptography;
+using System.Data.SQLite;
 
 namespace InappropriateWordSearcher
 {
@@ -27,75 +28,39 @@ namespace InappropriateWordSearcher
         }
 
 
-        private void axWindowsMediaPlayer1_Enter(object sender, EventArgs e)
-        {
-            //axWindowsMediaPlayer1.URL = @"D:\Ziegfred\Downloads\One Piece Film Red (CAM - 1080p Eng Sub) V2.mkv";
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.InitialDirectory = @"D:\Ziegfred\Downloads";
-                openFileDialog.Filter = "Video Files(*.mp4)|*.mp4";
-                //openFileDialog.FilterIndex = 2;
-                openFileDialog.RestoreDirectory = true;
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    axWindowsMediaPlayer1.URL = openFileDialog.FileName;
-                }
-            }
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(axWindowsMediaPlayer1.URL))
-            {
-                MessageBox.Show("Please upload video");
-                return;
-            }
-            scanButton.Text = "Scanning";
-            scanButton.Enabled= false;
-            var transcriptGenerator = new TranscriptGenerator();
-            Process process = transcriptGenerator.GenerateTranscriptProcess(axWindowsMediaPlayer1.URL);
-            process.Exited += new EventHandler(_processExited);
-            process.Start();
-        }
-
+       
         private void _processExited(object sender, System.EventArgs e)
         {
             string fileName = Path.GetFileNameWithoutExtension(axWindowsMediaPlayer1.URL);
             string jsonFilePath = Path.Combine(TEMP_PATH, $"{fileName}.en.json");
             if (File.Exists(jsonFilePath)) 
             {
-                List<TranscriptChunk> transcript = TranscriptSerializer.Deserialize(jsonFilePath);
-                foreach(var t in transcript)
+                string videoHash = FileHashGenerator.GetFileHash(axWindowsMediaPlayer1.URL);
+                var dbContext = new TranscriptHistoryDbContext();
+                string hasTranscript = dbContext.GetTranscript(videoHash);
+                string transcriptJson = File.ReadAllText(jsonFilePath);
+                if (hasTranscript == null)
                 {
-                    string[] words = t.content.Split(' ');
-                    foreach(var word in words)
-                    {
-                        if(!string.IsNullOrWhiteSpace(word))
-                        {
-                            this.Invoke(new MethodInvoker(delegate
-                            {
-                                listBox1.Items.Add(new WordClass
-                                {
-                                    Word = word,
-                                    StartTime = t.start,
-                                    EndTime = t.end
-                                });
-                            }));
-                        }
-                        
-                        
-                    }
+                    dbContext.SaveTranscript(videoHash, transcriptJson);
                 }
+                else
+                {
+                    dbContext.UpdateTranscript(videoHash, transcriptJson);
+                }
+
+                List<TranscriptChunk> transcript = TranscriptSerializer.DeserializeFile(jsonFilePath);
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    _loadWords(transcript);
+                }));
+
             }
             this.Invoke(new MethodInvoker(delegate
             {
                 scanButton.Text = "Scan";
                 scanButton.Enabled = true;
+                uploadButton.Enabled = true;
+                MessageBox.Show("The scan has completed");
             }));
             
         }
@@ -110,17 +75,77 @@ namespace InappropriateWordSearcher
             }
         }
 
-        private void hashButton_Click(object sender, EventArgs e)
+        private void uploadButton_Click(object sender, EventArgs e)
         {
-            using (var sha256 = SHA256.Create())
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                using (var stream = File.OpenRead(axWindowsMediaPlayer1.URL))
+                openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+                openFileDialog.Filter = "Video Files(*.mp4)|*.mp4";
+                //openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    byte[] hash = sha256.ComputeHash(stream);
-                    MessageBox.Show(Encoding.UTF8.GetString(hash));
+                    axWindowsMediaPlayer1.URL = openFileDialog.FileName;
                 }
             }
-            
+        }
+
+        private void scanButton_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(axWindowsMediaPlayer1.URL))
+            {
+                MessageBox.Show("Please upload video");
+                return;
+            }
+
+            string videoHash = FileHashGenerator.GetFileHash(axWindowsMediaPlayer1.URL);
+            var dbContext = new TranscriptHistoryDbContext();
+            string hasTranscript = dbContext.GetTranscript(videoHash);
+            if (hasTranscript != null)
+            {
+                DialogResult result = MessageBox.Show("There was a scan performed before, do you want to reuse its data?", "Information", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    List<TranscriptChunk> transcript = TranscriptSerializer.Deserialize(hasTranscript);
+                    _loadWords(transcript);
+                    return;
+                }
+            }
+
+            scanButton.Text = "Scanning";
+            scanButton.Enabled = false;
+            uploadButton.Enabled = false;
+            var transcriptGenerator = new TranscriptGenerator();
+            string fileName = $"{Path.GetFileNameWithoutExtension(axWindowsMediaPlayer1.URL)}.en.json";
+            if (File.Exists(Path.Combine(AppConstants.ABS_TEMP_FOLDER, fileName)))
+            {
+                File.Delete(Path.Combine(AppConstants.ABS_TEMP_FOLDER, fileName));
+            }
+            Process process = transcriptGenerator.GenerateTranscriptProcess(axWindowsMediaPlayer1.URL);
+            process.Exited += new EventHandler(_processExited);
+            process.Start();
+        }
+
+        private void _loadWords(List<TranscriptChunk> transcript)
+        {
+            foreach (var t in transcript)
+            {
+                string[] words = t.content.Split(' ');
+                foreach (var word in words)
+                {
+                    if (!string.IsNullOrWhiteSpace(word))
+                    {
+                        listBox1.Items.Add(new WordClass
+                        {
+                            Word = word,
+                            StartTime = t.start,
+                            EndTime = t.end
+                        });
+                        
+                    }
+                }
+            }
         }
     }
 
