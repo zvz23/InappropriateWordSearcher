@@ -10,13 +10,19 @@ namespace InappropriateWordSearcher.Services
 {
     public static class TranscriptSerializer
     {
-        public static List<TranscriptChunk> Deserialize(string jsonPath)
+        public static List<TranscriptChunk> DeserializeFile(string jsonPath)
         {
             string json = File.ReadAllText(jsonPath);
             List<TranscriptChunk> transcript = JsonConvert.DeserializeObject<List<TranscriptChunk>>(json);
             return transcript;
         }
-        
+
+        public static List<TranscriptChunk> Deserialize(string json)
+        {
+            List<TranscriptChunk> transcript = JsonConvert.DeserializeObject<List<TranscriptChunk>>(json);
+            return transcript;
+        }
+
     }
 
     public class TranscriptChunk
