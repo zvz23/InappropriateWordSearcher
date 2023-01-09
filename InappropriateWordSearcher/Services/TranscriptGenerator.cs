@@ -29,8 +29,7 @@ namespace InappropriateWordSearcher.Services
                 EnableRaisingEvents = true,
                 StartInfo =
                 {
-                    FileName = "autosub",
-                    WorkingDirectory = @"C:\Users\Ziegfred\source\repos\InappropriateWordSearcher\InappropriateWordSearcher\autosub",
+                    FileName = Path.Combine(AppConstants.AUTOSUB_FOLDER, "autosub"),
                     Arguments = args,
                     UseShellExecute = true,
                     

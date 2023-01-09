@@ -22,8 +22,13 @@ namespace InappropriateWordSearcher
             {
                 Directory.CreateDirectory(AppConstants.ABS_TEMP_FOLDER);
             }
+            if (!Directory.Exists(AppConstants.ABS_APP_DATA_FOLDER))
+            {
+                Directory.CreateDirectory(AppConstants.ABS_APP_DATA_FOLDER);
+            }
             TranscriptHistoryDbContext.Initialize_Database();
-            Application.Run(new Form1());
+
+            Application.Run(new Main());
         }
     }
 }
