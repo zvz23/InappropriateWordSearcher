@@ -22,16 +22,25 @@ namespace InappropriateWordSearcher
 
     public static class DbConstants
     {
-        public static readonly string DB_NAME = "TranscriptHistoryDB";
+        public static readonly string DB_NAME = "AppDB.db";
         public static readonly string ABS_DB_PATH = Path.Combine(AppConstants.ABS_TEMP_FOLDER, DB_NAME);
-        public const string DB_INITIAL_QUERY =
+        public const string TRANSCRIPT_HISTORY_TABLE_QUERY =
             @"
-            CREATE TABLE IF NOT EXISTS TranscriptHistory 
-            (
-	            TranscriptHistoryId integer PRIMARY KEY AUTOINCREMENT,
-	            videohash varchar,
-	            transcript text
-            );
+            CREATE TABLE IF NOT EXISTS TranscriptHistory (
+	            TranscriptHistoryId	INTEGER NOT NULL,
+	            videohash	TEXT,
+	            transcript	TEXT,
+	            PRIMARY KEY(TranscriptHistoryId AUTOINCREMENT)
+            )
+            ";
+
+        public const string PROFANE_WORDS_TABLE_QUERY =
+            @"
+            CREATE TABLE IF NOT EXISTS ProfaneWords (
+	            ProfaneWordId	INTEGER NOT NULL,
+	            Word	TEXT UNIQUE,
+	            PRIMARY KEY(ProfaneWordId AUTOINCREMENT)
+            )
             ";
     }
 }

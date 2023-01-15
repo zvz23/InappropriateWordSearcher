@@ -19,6 +19,7 @@ namespace InappropriateWordSearcher
         public Main()
         {
             InitializeComponent();
+            filterComboBox.SelectedIndex = 0;
             
 
         }
@@ -37,7 +38,7 @@ namespace InappropriateWordSearcher
             if (File.Exists(jsonFilePath)) 
             {
                 string videoHash = FileHashGenerator.GetFileHash(axWindowsMediaPlayer1.URL);
-                var dbContext = new TranscriptHistoryDbContext();
+                var dbContext = new AppDBContext();
                 string hasTranscript = dbContext.GetTranscript(videoHash);
                 string transcriptJson = File.ReadAllText(jsonFilePath);
                 if (hasTranscript == null)
@@ -117,7 +118,7 @@ namespace InappropriateWordSearcher
             }
 
             string videoHash = FileHashGenerator.GetFileHash(axWindowsMediaPlayer1.URL);
-            var dbContext = new TranscriptHistoryDbContext();
+            var dbContext = new AppDBContext();
             string hasTranscript = dbContext.GetTranscript(videoHash);
             if (hasTranscript != null)
             {
@@ -149,6 +150,7 @@ namespace InappropriateWordSearcher
             LastWords.Clear();
             listBox1.BeginUpdate();
             listBox1.Items.Clear();
+            AppDBContext appDBContext = new AppDBContext();
             foreach (var t in transcript)
             {
                 string[] words = t.content.Split(' ');
@@ -157,12 +159,14 @@ namespace InappropriateWordSearcher
                 {
                     if (!string.IsNullOrWhiteSpace(word))
                     {
-                        LastWords.Add(new WordClass
+                        WordClass wordClass = new WordClass()
                         {
                             Word = word,
                             StartTime = t.start,
-                            EndTime = t.end
-                        });
+                            EndTime = t.end,
+                            IsProfane = appDBContext.IsProfane(word)
+                        };
+                        LastWords.Add(wordClass);
                         
                     }
                 }
@@ -179,7 +183,7 @@ namespace InappropriateWordSearcher
                 return;
             }
             string videoHash = FileHashGenerator.GetFileHash(axWindowsMediaPlayer1.URL);
-            TranscriptHistoryDbContext dbContext = new TranscriptHistoryDbContext();
+            AppDBContext dbContext = new AppDBContext();
 
             string rawTranscript = dbContext.GetTranscript(videoHash);
             if (rawTranscript == null)
@@ -239,6 +243,23 @@ namespace InappropriateWordSearcher
 
 
         }
+
+        private void filterComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            listBox1.BeginUpdate();
+            listBox1.Items.Clear();
+            if (filterComboBox.Text == "Profane")
+            {
+                WordClass[] searchResult = LastWords.Where(w => w.IsProfane).ToArray();
+                listBox1.Items.AddRange(searchResult);
+            }
+            else
+            {
+                listBox1.Items.AddRange(LastWords.ToArray());
+            }
+
+            listBox1.EndUpdate();
+        }
     }
 
     public class WordClass
@@ -246,6 +267,7 @@ namespace InappropriateWordSearcher
         public string Word { get; set; }
         public double StartTime { get; set; }
         public double EndTime { get; set; }
+        public bool IsProfane { get; set; } = false;
 
 
         public override string ToString()

@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 using System.Data.SQLite;
 namespace InappropriateWordSearcher.Services
 {
-    public class TranscriptHistoryDbContext
+    public class AppDBContext
     {
 
-        public TranscriptHistoryDbContext() 
+        public AppDBContext() 
         {
         
         }
@@ -70,14 +70,81 @@ namespace InappropriateWordSearcher.Services
             }
         }
 
-        public static void Initialize_Database()
+        public bool IsProfane(string word)
         {
             using (var connection = new SQLiteConnection($"Data Source={DbConstants.ABS_DB_PATH}"))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = DbConstants.DB_INITIAL_QUERY;
+                command.CommandText = @"SELECT * FROM ProfaneWords WHERE Word=$word";
+                command.Parameters.AddWithValue("$word", word);
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read()) 
+                    { 
+                        return true; 
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        public void AddProfane(string word)
+        {
+            using (var connection = new SQLiteConnection($"Data Source={DbConstants.ABS_DB_PATH}"))
+            {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText =
+                    @"
+                        INSERT INTO ProfaneWords(Word)
+                        VALUES ($word)
+                    ";
+                command.Parameters.AddWithValue("$word", word);
                 command.ExecuteNonQuery();
+
+            }
+        }
+
+        //Continue
+        public void AddProfanes(List<string> words)
+        {
+            using (var connection = new SQLiteConnection($"Data Source={DbConstants.ABS_DB_PATH}"))
+            {
+                connection.Open();
+
+                using (var transaction = connection.BeginTransaction())
+                {
+                    var command = connection.CreateCommand();
+                    command.CommandText =
+                        @"
+                        INSERT OR IGNORE INTO ProfaneWords(Word)
+                        VALUES ($word)
+                    ";
+                    command.Parameters.AddWithValue("$word", words);
+                    command.ExecuteNonQuery();
+                }
+                
+
+            }
+        }
+
+        public static void Initialize_Database()
+        {
+            using (var connection = new SQLiteConnection($"Data Source={DbConstants.ABS_DB_PATH}"))
+            {
+                connection.Open();
+                var transcript_command = connection.CreateCommand();
+                transcript_command.CommandText = DbConstants.TRANSCRIPT_HISTORY_TABLE_QUERY;
+                transcript_command.ExecuteNonQuery();
+
+                var profane_command = connection.CreateCommand();
+                profane_command.CommandText = DbConstants.PROFANE_WORDS_TABLE_QUERY;
+                profane_command.ExecuteNonQuery();
+
             }
         }
 

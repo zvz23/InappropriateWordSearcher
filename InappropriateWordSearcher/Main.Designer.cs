@@ -47,6 +47,8 @@
             this.profanityValueLabel = new System.Windows.Forms.Label();
             this.threatValueLabel = new System.Windows.Forms.Label();
             this.exportButton = new System.Windows.Forms.Button();
+            this.filterComboBox = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.axWindowsMediaPlayer1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -85,9 +87,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(567, 32);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(69, 13);
+            this.label1.Size = new System.Drawing.Size(44, 13);
             this.label1.TabIndex = 4;
-            this.label1.Text = "List of words:";
+            this.label1.Text = "Search:";
             // 
             // axWindowsMediaPlayer1
             // 
@@ -226,11 +228,34 @@
             this.exportButton.UseVisualStyleBackColor = true;
             this.exportButton.Click += new System.EventHandler(this.exportButton_Click);
             // 
+            // filterComboBox
+            // 
+            this.filterComboBox.FormattingEnabled = true;
+            this.filterComboBox.Items.AddRange(new object[] {
+            "None",
+            "Profane"});
+            this.filterComboBox.Location = new System.Drawing.Point(749, 47);
+            this.filterComboBox.Name = "filterComboBox";
+            this.filterComboBox.Size = new System.Drawing.Size(121, 21);
+            this.filterComboBox.TabIndex = 18;
+            this.filterComboBox.SelectedIndexChanged += new System.EventHandler(this.filterComboBox_SelectedIndexChanged);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(748, 32);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(32, 13);
+            this.label6.TabIndex = 19;
+            this.label6.Text = "Filter:";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(910, 521);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.filterComboBox);
             this.Controls.Add(this.exportButton);
             this.Controls.Add(this.threatValueLabel);
             this.Controls.Add(this.profanityValueLabel);
@@ -278,6 +303,8 @@
         private System.Windows.Forms.Label profanityValueLabel;
         private System.Windows.Forms.Label threatValueLabel;
         private System.Windows.Forms.Button exportButton;
+        private System.Windows.Forms.ComboBox filterComboBox;
+        private System.Windows.Forms.Label label6;
     }
 }
 

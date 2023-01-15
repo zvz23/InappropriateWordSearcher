@@ -26,7 +26,7 @@ namespace InappropriateWordSearcher
             {
                 Directory.CreateDirectory(AppConstants.ABS_APP_DATA_FOLDER);
             }
-            TranscriptHistoryDbContext.Initialize_Database();
+            AppDBContext.Initialize_Database();
 
             Application.Run(new Main());
         }
